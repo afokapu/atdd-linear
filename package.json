@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "Project an ATDD plan into Linear: wagons, features, WMBTs, interlockings and journeys, with status from tests.",
   "type": "module",
-  "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/afokapu/atdd-linear.git" },
   "bin": { "atdd-linear": "./src/cli.ts" },
   "exports": { ".": "./src/index.ts" },
