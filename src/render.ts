@@ -14,15 +14,21 @@ export function mergeDescription(synced: string, existing?: string | null): stri
 
 /**
  * Linear stores Markdown in its own canonical form: link targets wrapped in `<…>`, blank lines added
- * around lists and rules, nested bullets written `*`, underscores and other punctuation escaped. Two
- * descriptions that differ only in that way say the same thing, and treating them as different would
- * rewrite every issue on every run.
+ * around lists and rules, nested bullets written `*`, punctuation escaped, table rules shortened to `--`,
+ * emphasis moved out of link text and off code spans, and bare domains linked. Two descriptions that
+ * differ only in that way say the same thing, and treating them as different would rewrite every issue
+ * on every run. The cost: a change of emphasis alone is not synced until the words change too.
  */
 export function sameMarkdown(a?: string | null, b?: string | null): boolean {
   const canon = (s?: string | null) => (s ?? "")
     .replace(/\]\(<([^>]+)>\)/g, "]($1)")
     .replace(/^(\s*)\* /gm, "$1- ")
     .replace(/\\([\\`*_{}\[\]()#+\-.!|>~])/g, "$1")
+    .replace(/^\|(?:\s*:?-+:?\s*\|)+\s*$/gm, row => row.replace(/-+/g, "---").replace(/\s+/g, ""))
+    // Linear's editor also moves emphasis (out of link text, off code spans) and links bare domains, so
+    // emphasis markers are ignored and a link whose label is its own URL reads as the plain text.
+    .replace(/\[([^\]]+)\]\((?:https?:\/\/)?([^)\s]+)\)/g, (m, label, url) => (label === url ? label : m))
+    .replace(/[*_]/g, "")
     .split("\n").map(l => l.trimEnd()).filter(l => l !== "").join("\n");
   return canon(a) === canon(b);
 }

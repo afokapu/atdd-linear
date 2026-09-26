@@ -12,6 +12,9 @@ describe("descriptions", () => {
   });
   test("Linear's canonical Markdown counts as unchanged", () => {
     expect(sameMarkdown("[a](https://x/a)\n- [ ] one\n  - b\nplan/_x.yaml", "[a](<https://x/a>)\n\n- [ ] one\n  * b\n\nplan/\\_x.yaml")).toBeTrue();
+    expect(sameMarkdown("| A | B |\n| --- | --- |\n| a | b |", "| A | B |\n| -- | -- |\n| a | b |")).toBeTrue();
+    expect(sameMarkdown("[*The boundary*](https://l/b) and chess.com", "[The boundary](https://l/b) and [chess.com](http://chess.com)")).toBeTrue();
+    expect(sameMarkdown("*`code` rest*", "`code` *rest*")).toBeTrue();
     expect(sameMarkdown("one", "two")).toBeFalse();
   });
   test("the URN is recovered from the synced block", () => expect(urnIn("x\n`atdd-urn: wmbt:w:P001`")).toBe("wmbt:w:P001"));
@@ -26,7 +29,7 @@ describe("descriptions", () => {
 describe("configuration", () => {
   test("the team, repository and colours come from atdd-linear.yaml", () => {
     expect(readConfig(new URL("fixtures/repo", import.meta.url).pathname)).toEqual(
-      { team: "TST", repo: "https://github.com/example/shop", documents: [], colors: { checkout: "#123456" } });
+      { team: "TST", repo: "https://github.com/example/shop", documents: [], summary: undefined, journeyView: "docs/purpose/journeys", colors: { checkout: "#123456" } });
   });
   test("a missing file says what it must hold", () => expect(() => readConfig("/nonexistent")).toThrow("names the Linear team"));
   test("an unconfigured train keeps the same colour from run to run", () => {

@@ -6,6 +6,8 @@
  *   repo: https://github.com/org/repo           # where Source links point
  *   documents:                                  # repository docs mirrored as Linear team documents
  *     - docs/purpose/missions.adoc
+ *   summary: docs/purpose/index.adoc            # whose headline opens each release's description
+ *   journey_view: docs/purpose/journeys         # where `atdd-bun docs journeys` writes its SVGs
  *   colors:                                     # optional: a train label's colour, by interlocking
  *     contest: "#1F6B52"
  *
@@ -18,6 +20,8 @@ export type Config = {
   team: string;
   repo: string;
   documents: string[];
+  summary?: string;
+  journeyView: string;
   colors: Record<string, string>;
 };
 
@@ -33,7 +37,9 @@ export function readConfig(root: string): Config {
   if (!/^https?:\/\//.test(repo)) throw new Error(`${CONFIG_FILE}: repo must be the repository's https URL`);
   const documents = Array.isArray(d.documents) ? d.documents.map(String) : [];
   const colors = d.colors && typeof d.colors === "object" ? Object.fromEntries(Object.entries(d.colors).map(([k, v]) => [k, String(v)])) : {};
-  return { team, repo, documents, colors };
+  const summary = typeof d.summary === "string" ? d.summary.trim() : undefined;
+  const journeyView = typeof d.journey_view === "string" ? d.journey_view.trim().replace(/\/+$/, "") : "docs/purpose/journeys";
+  return { team, repo, documents, summary, journeyView, colors };
 }
 
 /** A stable colour for a train nobody configured, so a label keeps its colour from run to run. */
