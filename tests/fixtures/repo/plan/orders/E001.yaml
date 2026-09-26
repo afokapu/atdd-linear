@@ -1,0 +1,13 @@
+urn: wmbt:orders:E001
+object_of_control: order-confirmation
+statement: minimize time of order-confirmation when the basket is valid
+acceptances:
+- identity:
+    urn: acc:orders:E001-SMOKE-001-a-valid-basket-is-confirmed
+    id: AC-SMOKE-001
+    purpose: A valid basket becomes a confirmed order
+    phase: SMOKE
+  harness: { type: smoke, category: integration }
+  given: { abstract: [the checkout endpoint is up, a valid basket] }
+  when: { abstract: the basket is submitted, target: POST /orders }
+  then: { abstract: [an order is confirmed] }

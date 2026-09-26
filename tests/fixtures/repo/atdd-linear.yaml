@@ -1,0 +1,4 @@
+team: TST
+repo: https://github.com/example/shop
+colors:
+  checkout: "#123456"

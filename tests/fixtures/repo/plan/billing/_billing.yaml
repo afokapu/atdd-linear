@@ -1,0 +1,7 @@
+urn: wagon:billing
+wagon: billing
+description: Charge a confirmed order.
+theme: commerce
+wmbt:
+  P001: Increase the likelihood that a charge names its order, when it is taken
+  total: 1

@@ -1,0 +1,9 @@
+interlocking_id: interlocking:checkout
+title: Checking out
+routes:
+- route_id: nominal
+  train_id: train:orders:checkout
+messages:
+- from: user:shopper
+  to: wagon:orders
+  wmbt_refs: [wmbt:orders:E001, wmbt:billing:P001]

@@ -1,0 +1,5 @@
+urn: feature:orders:place-order
+wagon: wagon:orders
+description: Confirm a valid basket as an order.
+wmbts:
+- wmbt:orders:E001

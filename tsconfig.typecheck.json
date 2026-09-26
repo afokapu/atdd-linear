@@ -1,0 +1,7 @@
+{
+  // Type checking only: Bun would honour "paths" at run time too, so the mapping to the declaration of
+  // the atdd-bun API this package uses lives here and not in tsconfig.json.
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "paths": { "@afokapu/atdd-bun": ["./types/atdd-bun.d.ts"] } },
+  "include": ["src", "tests", "types"]
+}

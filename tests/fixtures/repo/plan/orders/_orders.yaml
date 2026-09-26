@@ -1,0 +1,9 @@
+urn: wagon:orders
+wagon: orders
+description: Take an order from a basket to a confirmed purchase.
+theme: commerce
+wmbt:
+  E001: Minimize the time it takes to confirm an order, when the basket is valid
+  total: 1
+features:
+- urn: feature:orders:place-order

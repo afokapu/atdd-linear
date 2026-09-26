@@ -1,0 +1,13 @@
+urn: wmbt:billing:P001
+object_of_control: charge-attribution
+statement: increase likelihood of charge-attribution when a charge is taken
+acceptances:
+- identity:
+    urn: acc:billing:P001-UNIT-001-a-charge-names-its-order
+    id: AC-UNIT-001
+    purpose: A charge carries its order id
+    phase: UNIT
+  harness: { type: unit, category: backend }
+  given: { abstract: [a confirmed order] }
+  when: { abstract: it is charged, target: charge }
+  then: { abstract: [the charge names the order] }

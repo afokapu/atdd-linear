@@ -1,0 +1,6 @@
+journey_id: journey:checkout
+title: Check out
+entrypoint: { interlocking_id: interlocking:checkout, exposed: true, actions: [check_out], reason: null, surfaces: [backend] }
+continuations: []
+terminals:
+- { from: { interlocking_id: interlocking:checkout, route_id: nominal }, outcome: the order is confirmed }
