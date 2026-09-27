@@ -1,9 +1,10 @@
 /**
- * A release is a Linear project, and its milestones are the journeys it delivers. People create both,
- * and name each milestone's journey as `journey:<id>` in its description; from the plan this writes the
- * release's one-line summary, each milestone's journey in words and pictures, and the release's
- * description. It makes no views: the project already is the release, and its own page groups the
- * release's issues by milestone, so a view of the same issues would only duplicate it.
+ * A project is a scope (what we are building, named `<TEAM KEY>: <scope>`), and its milestones are the
+ * journeys it delivers; the versions it ships in are cycles, not projects. People create the project and
+ * its milestones, and name each milestone's journey as `journey:<id>` in its description; from the plan
+ * this writes the project's one-line summary, each milestone's journey in words and pictures, and the
+ * project's description. It makes no views: the project's own page groups its issues by milestone, so a
+ * view of the same issues would only duplicate it.
  *
  * `atdd-linear.lock.json` records what Linear cannot be asked for again: the mirrored documents and the
  * uploaded images by content hash.

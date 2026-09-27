@@ -13,11 +13,12 @@ rules atdd-bun enforces.
 | WMBT | a sub-issue of its feature (or an issue of its own where no feature lists it), its acceptances as checkboxes with Given / When / Then |
 | interlocking | a `train:<name>` label, and a `Train · <name>` view |
 | journey | a `Journey · <title>` view over its interlockings' labels |
-| release | a project, created by people; `atdd-linear release` writes its summary, its description and its milestones' journeys |
-| journey delivered in a release | a milestone of that project, set by people |
+| who or what the work is for | an initiative, created by people |
+| a scope (what we are building) | a project named `<TEAM KEY>: <scope>`, created by people; `atdd-linear release` writes its summary, its description and its milestones' journeys |
+| journey delivered in a scope | a milestone of that project, `<order> · <journey title>`, set by people |
 | documentation pages listed in `documents:` | Linear team documents, converted from AsciiDoc |
-| a release's description | the `summary:` page's headline, then each milestone's journey map as an image |
-| a version, when versions follow a cadence | a cycle, named from the `cycles:` list, with a release-notes document |
+| a project's description | the `summary:` page's headline, then each milestone's journey map as an image |
+| a version | a cycle, named from the `cycles:` list, with a release-notes document; never a project |
 
 ## What it owns, and what it never touches
 
@@ -43,7 +44,7 @@ team: FOS                                    # the Linear team key
 repo: https://github.com/org/repo            # where Source links point
 documents:                                   # optional: pages mirrored as Linear team documents
   - docs/purpose/missions.adoc
-summary: docs/purpose/index.adoc             # optional: whose headline opens a release's description
+summary: docs/purpose/index.adoc             # optional: whose headline opens a project's description
 journey_view: docs/purpose/journeys          # where `atdd-bun docs journeys` writes (the default)
 colors:                                      # optional: a train label's colour, by interlocking
   contest: "#1F6B52"
@@ -56,7 +57,7 @@ cycles:                                      # optional: cycle N is named after 
 bunx atdd-linear sync                        # print what would change; change nothing
 bunx atdd-linear sync --apply                # make the changes
 bunx atdd-linear sync --results junit.xml    # take WMBT status from a test run
-bunx atdd-linear release "Forge OS v0.1.0"   # a release: its summary, description and milestones
+bunx atdd-linear release "FOS: First playable"  # a project: its summary, description and milestones
 bunx atdd-linear ci init                     # a workflow that syncs on every merge to main
 bunx atdd-linear agent init                  # teach the repository's agents how Linear is organised
 ```
@@ -84,12 +85,12 @@ cycle's start and end, from git. It is rewritten on every sync while the cycle r
 after it ends, and then left alone. Text below the ✍️ marker is kept. The plan changes need full
 history, so the CI workflow checks out with `fetch-depth: 0`.
 
-## Documents, releases and images
+## Documents, projects and images
 
 Mirrored documents are the repository's: every sync rewrites them, so an edit belongs in the repository.
 A cross-reference to another mirrored page links to its Linear document; any other links to GitHub.
 
-A release's description has the same two owners as an issue's: the block above the ✍️ marker is
+A project's description has the same two owners as an issue's: the block above the ✍️ marker is
 rewritten, anything below it is kept. A milestone names its journey as `journey:<id>` in its
 description, which is how its map is found. Images are rendered to PNG and uploaded to Linear, which
 cannot read a private repository.
@@ -97,9 +98,9 @@ cannot read a private repository.
 `atdd-linear.lock.json` records the mirrored documents and every uploaded image by content hash, so
 nothing is made or uploaded twice. Commit it.
 
-`release` makes no views: the project already is the release, and its page groups the release's
+`release` makes no views: the project page already groups its
 issues by milestone (Display → Grouping → Milestone). The `Journey ·` and `Train ·` views `sync`
-makes are the plan-wide ones, across every release.
+makes are the plan-wide ones, across every project.
 
 Linear rewrites Markdown as it stores it (escapes, list markers, table rules, emphasis placement,
 bare domains linked); the comparison ignores those differences, so a second sync of an unchanged plan
