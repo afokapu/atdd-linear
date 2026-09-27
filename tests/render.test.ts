@@ -36,8 +36,8 @@ describe("configuration", () => {
     expect(colorFor("checkout", { checkout: "#123456" })).toBe("#123456");
     expect(colorFor("ladder", {})).toBe(colorFor("ladder", {}));
   });
-  test("a view description is the first sentence, within Linear's limit", () => {
-    expect(viewDescription("journey:x (plan/x.yaml). A steward declares. Done when green.")).toBe("journey:x (plan/x.yaml).");
+  test("a view description is plain text within Linear's limit", () => {
+    expect(viewDescription("`journey:x` · **PLAY** mode")).toBe("journey:x · PLAY mode");
     expect(viewDescription("y".repeat(400)).length).toBe(250);
   });
 });

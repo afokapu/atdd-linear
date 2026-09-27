@@ -11,7 +11,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Config } from "./config.ts";
 import { journeyOf, lookupImages, milestoneBody, releaseBody, releaseSummary, upload, type Milestone } from "./docs.ts";
-import { readPlan } from "./plan.ts";
+import { readPlan, type Plan } from "./plan.ts";
 import type { Gql } from "./linear.ts";
 import { mergeDescription, sameMarkdown } from "./render.ts";
 import type { Op } from "./sync.ts";
@@ -30,8 +30,19 @@ export const readLock = (root: string): Lock =>
   existsSync(join(root, LOCK_FILE)) ? JSON.parse(readFileSync(join(root, LOCK_FILE), "utf8")) : {};
 export const writeLock = (root: string, lock: Lock) => writeFileSync(join(root, LOCK_FILE), JSON.stringify(lock, null, 2) + "\n");
 
-/** A view's description: the milestone's first sentence, within Linear's limit for view descriptions. */
-export const viewDescription = (text: string) => `${text.split(". ")[0]!.replace(/\.$/, "")}.`.slice(0, 250);
+/** A view's description is plain text, within Linear's limit, so it never carries Markdown. */
+export const viewDescription = (text: string) => {
+  const plain = text.replace(/[`*_]/g, "").replace(/\s+/g, " ").trim();
+  return plain.length <= 250 ? plain : `${plain.slice(0, 249)}…`;
+};
+
+/** One sentence for a milestone's view: the journey it delivers, how it starts, and where it comes from. */
+export function milestoneViewDescription(release: string, m: Milestone, plan: Plan): string {
+  const id = journeyOf(m.description), j = id ? plan.journeys.find(x => x.id === `journey:${id}`) : undefined;
+  if (!j) return viewDescription(`The features ${release} delivers in ${m.name}.`);
+  const start = j.exposed ? `, started by ${j.actions.join(" or ")}` : "";
+  return viewDescription(`The features ${release} delivers for ${j.title}${start}. Source: ${j.path}`);
+}
 
 /** `views: false` plans the summary, milestones and description, and leaves the release's views alone. */
 export async function planRelease(gql: Gql, root: string, projectName: string, config: Config, views = true): Promise<Op[]> {
@@ -49,16 +60,16 @@ export async function planRelease(gql: Gql, root: string, projectName: string, c
     (await gql(`query{ customViews(first:250){ nodes{ id name description filterData team{ id } } } }`)).customViews.nodes
       .filter((v: any) => v.team?.id === teamId).map((v: any) => [v.name, v]));
 
+  const plan = await readPlan(root);
   const inProject = { project: { id: { eq: project.id } } }, features = { parent: { null: true } };
   const wanted = [
     { name: `${project.name} · All features`, description: `Every feature planned for ${project.name}, across its journeys.`, filterData: { and: [inProject, features] } },
     ...[...project.projectMilestones.nodes].sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((m: any) => ({
-      name: `${project.name} · ${m.name}`, description: viewDescription(String(m.description ?? m.name)),
+      name: `${project.name} · ${m.name}`, description: milestoneViewDescription(project.name, m, plan),
       filterData: { and: [inProject, { projectMilestone: { id: { eq: m.id } } }, features] },
     })),
   ];
   const ops: Op[] = [];
-  const plan = await readPlan(root);
   const milestones = project.projectMilestones.nodes as Milestone[];
   const dry = lookupImages(lock);
   const uploads = async (bytes: Uint8Array, name: string) => { const url = await upload(gql, bytes, name, lock); writeLock(root, lock); return url; };
