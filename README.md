@@ -17,7 +17,7 @@ rules atdd-bun enforces.
 | journey delivered in a release | a milestone of that project, set by people |
 | documentation pages listed in `documents:` | Linear team documents, converted from AsciiDoc |
 | a release's description | the `summary:` page's headline, then each milestone's journey map as an image |
-| a version, when versions follow a cadence | a cycle, named from the `cycles:` list |
+| a version, when versions follow a cadence | a cycle, named from the `cycles:` list, with a release-notes document |
 
 ## What it owns, and what it never touches
 
@@ -69,6 +69,13 @@ Linear creates cycles a few weeks ahead and leaves them unnamed. Where each cycl
 the versions under `cycles:` and every `sync` names the cycles it finds: cycle 1 takes the first entry,
 cycle 2 the second. A cycle that already has a name keeps it, so a name typed in Linear wins, and a
 cycle past the end of the list stays unnamed.
+
+Each version also gets release notes: a document on its cycle titled `<cycle name> · Release notes`.
+It lists the journeys completed that week, the WMBTs delivered (completed in Linear inside the cycle,
+which the tests decide), grouped by train, and what `plan/` gained, changed and lost between the
+cycle's start and end, from git. It is rewritten on every sync while the cycle runs, written once more
+after it ends, and then left alone. Text below the ✍️ marker is kept. The plan changes need full
+history, so the CI workflow checks out with `fetch-depth: 0`.
 
 ## Documents, releases and images
 

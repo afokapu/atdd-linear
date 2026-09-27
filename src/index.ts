@@ -10,4 +10,6 @@ export type { Gql } from "./linear.ts";
 export { apply, planSync, stateFor, WAGON_GROUP } from "./sync.ts";
 export type { Op } from "./sync.ts";
 export { planCycles } from "./cycles.ts";
+export { gitHistory, notesBody, NOTES_SUFFIX, planNotes } from "./notes.ts";
+export type { Change, History } from "./notes.ts";
 export { LOCK_FILE, planRelease, readLock, writeLock } from "./release.ts";

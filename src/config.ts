@@ -10,7 +10,8 @@
  *   journey_view: docs/purpose/journeys         # where `atdd-bun docs journeys` writes its SVGs
  *   colors:                                     # optional: a train label's colour, by interlocking
  *     contest: "#1F6B52"
- *   cycles:                                     # optional: cycle N is named after the Nth entry
+ *   cycles:                                     # optional: cycle N is named after the Nth entry, and
+ *                                               # each cycle gets release notes
  *     - "Version 1.0: Apoc"
  *
  * It is a file of its own, not a key in atdd-bun.yaml, whose integrity check owns that file's schema.

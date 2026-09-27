@@ -15,6 +15,7 @@ import { client } from "./linear.ts";
 import { readPlan, scopeTo } from "./plan.ts";
 import { planCycles } from "./cycles.ts";
 import { planDocuments } from "./docs.ts";
+import { planNotes } from "./notes.ts";
 import { planRelease, readLock, writeLock } from "./release.ts";
 import { apply, planSync, type Op } from "./sync.ts";
 
@@ -62,6 +63,7 @@ switch (args[0]) {
       ops.push(...await planDocuments(gql, root, config, team.id, lock, () => writeLock(root, lock)));
     }
     ops.push(...await planCycles(gql, config.team, config.cycles));
+    if (config.cycles.length && !scope) ops.push(...await planNotes(gql, root, plan, config));
     await finish(ops);
     break;
   }
