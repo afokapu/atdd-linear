@@ -17,6 +17,7 @@ rules atdd-bun enforces.
 | journey delivered in a release | a milestone of that project, set by people |
 | documentation pages listed in `documents:` | Linear team documents, converted from AsciiDoc |
 | a release's description | the `summary:` page's headline, then each milestone's journey map as an image |
+| a version, when versions follow a cadence | a cycle, named from the `cycles:` list |
 
 ## What it owns, and what it never touches
 
@@ -46,6 +47,9 @@ summary: docs/purpose/index.adoc             # optional: whose headline opens a 
 journey_view: docs/purpose/journeys          # where `atdd-bun docs journeys` writes (the default)
 colors:                                      # optional: a train label's colour, by interlocking
   contest: "#1F6B52"
+cycles:                                      # optional: cycle N is named after the Nth entry
+  - "Version 1.0: Apoc"
+  - "Version 2.0: Bane"
 ```
 
 ```sh
@@ -58,6 +62,13 @@ bunx atdd-linear ci init                     # a workflow that syncs on every me
 
 The API key comes from `LINEAR_API_KEY`, or on macOS from the Keychain entry `linear-api-key`
 (`security add-generic-password -U -a "$USER" -s linear-api-key -w`). It is never printed.
+
+## Cycles
+
+Linear creates cycles a few weeks ahead and leaves them unnamed. Where each cycle is a version, list
+the versions under `cycles:` and every `sync` names the cycles it finds: cycle 1 takes the first entry,
+cycle 2 the second. A cycle that already has a name keeps it, so a name typed in Linear wins, and a
+cycle past the end of the list stays unnamed.
 
 ## Documents, releases and images
 

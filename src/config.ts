@@ -10,6 +10,8 @@
  *   journey_view: docs/purpose/journeys         # where `atdd-bun docs journeys` writes its SVGs
  *   colors:                                     # optional: a train label's colour, by interlocking
  *     contest: "#1F6B52"
+ *   cycles:                                     # optional: cycle N is named after the Nth entry
+ *     - "Version 1.0: Apoc"
  *
  * It is a file of its own, not a key in atdd-bun.yaml, whose integrity check owns that file's schema.
  */
@@ -23,6 +25,8 @@ export type Config = {
   summary?: string;
   journeyView: string;
   colors: Record<string, string>;
+  /** cycle N's name is `cycles[N - 1]` */
+  cycles: string[];
 };
 
 export const CONFIG_FILE = "atdd-linear.yaml";
@@ -38,8 +42,9 @@ export function readConfig(root: string): Config {
   const documents = Array.isArray(d.documents) ? d.documents.map(String) : [];
   const colors = d.colors && typeof d.colors === "object" ? Object.fromEntries(Object.entries(d.colors).map(([k, v]) => [k, String(v)])) : {};
   const summary = typeof d.summary === "string" ? d.summary.trim() : undefined;
+  const cycles = Array.isArray(d.cycles) ? d.cycles.map(c => String(c).trim()) : [];
   const journeyView = typeof d.journey_view === "string" ? d.journey_view.trim().replace(/\/+$/, "") : "docs/purpose/journeys";
-  return { team, repo, documents, summary, journeyView, colors };
+  return { team, repo, documents, summary, journeyView, colors, cycles };
 }
 
 /** A stable colour for a train nobody configured, so a label keeps its colour from run to run. */

@@ -28,7 +28,7 @@ describe("descriptions", () => {
 describe("configuration", () => {
   test("the team, repository and colours come from atdd-linear.yaml", () => {
     expect(readConfig(new URL("fixtures/repo", import.meta.url).pathname)).toEqual(
-      { team: "TST", repo: "https://github.com/example/shop", documents: [], summary: undefined, journeyView: "docs/purpose/journeys", colors: { checkout: "#123456" } });
+      { team: "TST", repo: "https://github.com/example/shop", documents: [], summary: undefined, journeyView: "docs/purpose/journeys", colors: { checkout: "#123456" }, cycles: [] });
   });
   test("a missing file says what it must hold", () => expect(() => readConfig("/nonexistent")).toThrow("names the Linear team"));
   test("an unconfigured train keeps the same colour from run to run", () => {

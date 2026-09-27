@@ -13,6 +13,7 @@ import { readConfig } from "./config.ts";
 import { evidenceFrom, readBindings } from "./evidence.ts";
 import { client } from "./linear.ts";
 import { readPlan, scopeTo } from "./plan.ts";
+import { planCycles } from "./cycles.ts";
 import { planDocuments } from "./docs.ts";
 import { planRelease, readLock, writeLock } from "./release.ts";
 import { apply, planSync, type Op } from "./sync.ts";
@@ -60,6 +61,7 @@ switch (args[0]) {
       const team = (await gql(`query($k:String!){ teams(filter:{key:{eq:$k}}){ nodes{ id } } }`, { k: config.team })).teams.nodes[0];
       ops.push(...await planDocuments(gql, root, config, team.id, lock, () => writeLock(root, lock)));
     }
+    ops.push(...await planCycles(gql, config.team, config.cycles));
     await finish(ops);
     break;
   }
