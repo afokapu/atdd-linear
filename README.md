@@ -13,7 +13,7 @@ rules atdd-bun enforces.
 | WMBT | a sub-issue of its feature (or an issue of its own where no feature lists it), its acceptances as checkboxes with Given / When / Then |
 | interlocking | a `train:<name>` label, and a `Train · <name>` view |
 | journey | a `Journey · <title>` view over its interlockings' labels |
-| release | a project, created by people; `atdd-linear release` gives it a view per milestone |
+| release | a project, created by people; `atdd-linear release` gives it a summary, a description and a view per milestone |
 | journey delivered in a release | a milestone of that project, set by people |
 | documentation pages listed in `documents:` | Linear team documents, converted from AsciiDoc |
 | a release's description | the `summary:` page's headline, then each milestone's journey map as an image |
@@ -69,10 +69,12 @@ rewritten, anything below it is kept. A milestone names its journey as `journey:
 description, which is how its map is found. Images are rendered to PNG and uploaded to Linear, which
 cannot read a private repository.
 
-`atdd-linear.lock.json` records what Linear cannot be asked for: the release views (its API lists no
-project-scoped view), the mirrored documents, and every uploaded image by content hash, so nothing is
-made or uploaded twice. Commit it. For a release whose views were made before the lock existed,
-`release --no-views` updates its description alone.
+`atdd-linear.lock.json` records the mirrored documents and every uploaded image by content hash, so
+nothing is made or uploaded twice. Commit it.
+
+A release's views are team views (`<release> · All features`, `<release> · <milestone>`), found by
+name like the train and journey views. Linear's public API accepts a project on a view but attaches it
+to nothing, so a project-scoped view would be unreachable. `release --no-views` leaves them alone.
 
 Linear rewrites Markdown as it stores it (escapes, list markers, table rules, emphasis placement,
 bare domains linked); the comparison ignores those differences, so a second sync of an unchanged plan

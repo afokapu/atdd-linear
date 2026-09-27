@@ -1,11 +1,11 @@
 /**
- * A release is a Linear project, and its milestones are the journeys it delivers. People create both;
- * this gives a release its views: every feature in it, and one view per milestone.
+ * A release is a Linear project, and its milestones are the journeys it delivers. People create both,
+ * and name each milestone's journey as `journey:<id>` in its description; from the plan this writes the
+ * release's one-line summary, each milestone's journey in words and pictures, the release's description,
+ * and a team view per milestone plus one for the whole release.
  *
- * Linear's API lists no project-scoped view (neither `customViews` nor `project.facets` returns one),
- * so a view created here is recorded by id in `atdd-linear.lock.json`, committed beside the config.
- * The lock, not a listing, says what exists, and a view deleted in Linear is dropped from it and made
- * again on the next run.
+ * `atdd-linear.lock.json` records what Linear cannot be asked for again: the mirrored documents and the
+ * uploaded images by content hash.
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -18,7 +18,8 @@ import type { Op } from "./sync.ts";
 
 export const LOCK_FILE = "atdd-linear.lock.json";
 export type Lock = {
-  releases: Record<string, Record<string, string>>;
+  /** retired: release views are team views now, found by name */
+  releases?: Record<string, Record<string, string>>;
   /** repository path -> the Linear document mirroring it */
   documents?: Record<string, { id: string; url: string }>;
   /** sha256 of an uploaded image -> its Linear asset URL, so an unchanged image is never uploaded twice */
@@ -26,26 +27,27 @@ export type Lock = {
 };
 
 export const readLock = (root: string): Lock =>
-  existsSync(join(root, LOCK_FILE)) ? { releases: {}, ...JSON.parse(readFileSync(join(root, LOCK_FILE), "utf8")) } : { releases: {} };
+  existsSync(join(root, LOCK_FILE)) ? JSON.parse(readFileSync(join(root, LOCK_FILE), "utf8")) : {};
 export const writeLock = (root: string, lock: Lock) => writeFileSync(join(root, LOCK_FILE), JSON.stringify(lock, null, 2) + "\n");
 
 /** A view's description: the milestone's first sentence, within Linear's limit for view descriptions. */
 export const viewDescription = (text: string) => `${text.split(". ")[0]!.replace(/\.$/, "")}.`.slice(0, 250);
 
-/**
- * `views: false` plans the description alone, for a release whose views were made before this lock
- * existed: they cannot be listed, so making them again would duplicate them.
- */
+/** `views: false` plans the summary, milestones and description, and leaves the release's views alone. */
 export async function planRelease(gql: Gql, root: string, projectName: string, config: Config, views = true): Promise<Op[]> {
   const found = (await gql(`query($n:String!){ projects(filter:{name:{eq:$n}}){ nodes{ id name description content projectMilestones{ nodes{ id name description sortOrder } } } } }`, { n: projectName })).projects.nodes;
   if (found.length !== 1) throw new Error(`expected one project named "${projectName}", found ${found.length}`);
   const project = found[0];
   const lock = readLock(root);
-  const recorded = lock.releases[project.id] ?? {};
-  for (const [name, id] of Object.entries(recorded)) {
-    const view = (await gql(`query($id:String!){ customView(id:$id){ id archivedAt } }`, { id }).catch(() => null))?.customView;
-    if (!view || view.archivedAt) delete recorded[name];
-  }
+  // Release views are team views: the public API accepts a projectId on a view but attaches it to
+  // nothing (no facet, no team, absent from every listing), so a view scoped that way is unreachable.
+  // A team view filtered to the release is listed, so it is found by name like the train views.
+  const t = await gql(`query($k:String!){ teams(filter:{key:{eq:$k}}){ nodes{ id } } }`, { k: config.team });
+  const teamId = t.teams.nodes[0]?.id;
+  if (!teamId) throw new Error(`no Linear team with key ${config.team}`);
+  const existingViews = new Map<string, { id: string; description: string; filterData: unknown }>(
+    (await gql(`query{ customViews(first:250){ nodes{ id name description filterData team{ id } } } }`)).customViews.nodes
+      .filter((v: any) => v.team?.id === teamId).map((v: any) => [v.name, v]));
 
   const inProject = { project: { id: { eq: project.id } } }, features = { parent: { null: true } };
   const wanted = [
@@ -91,13 +93,13 @@ export async function planRelease(gql: Gql, root: string, projectName: string, c
     } });
   }
   if (!views) return ops;
-  return [...ops, ...wanted.filter(v => !recorded[v.name]).map(v => ({
-    kind: "create view", what: v.name, run: async () => {
-      const r = await gql(`mutation($i:CustomViewCreateInput!){ customViewCreate(input:$i){ customView{ id } } }`,
-        { i: { ...v, projectId: project.id, shared: true, icon: "Rocket", color: "#1F6B52" } });
-      recorded[v.name] = r.customViewCreate.customView.id;
-      lock.releases[project.id] = recorded;
-      writeLock(root, lock);   // after every view, so a failure part way never forgets one it made
-    },
-  }))];
+  for (const v of wanted) {
+    const existing = existingViews.get(v.name);
+    if (existing && existing.description === v.description && JSON.stringify(existing.filterData) === JSON.stringify(v.filterData)) continue;
+    ops.push({ kind: existing ? "update view" : "create view", what: v.name, run: async () => {
+      if (existing) await gql(`mutation($id:String!,$i:CustomViewUpdateInput!){ customViewUpdate(id:$id, input:$i){ success } }`, { id: existing.id, i: { description: v.description, filterData: v.filterData } });
+      else await gql(`mutation($i:CustomViewCreateInput!){ customViewCreate(input:$i){ success } }`, { i: { ...v, teamId, shared: true, icon: "Rocket", color: "#1F6B52" } });
+    } });
+  }
+  return ops;
 }
