@@ -1,5 +1,5 @@
 export { readPlan, scopeTo } from "./plan.ts";
-export type { Acceptance, Feature, Interlocking, Journey, Plan, Wagon, Wmbt } from "./plan.ts";
+export type { Acceptance, Continuation, Feature, Interlocking, Journey, Plan, Route, Terminal, Wagon, Wmbt } from "./plan.ts";
 export { evidenceFrom, featureProgress, progressOf, readBindings } from "./evidence.ts";
 export type { Progress, TestEvidence } from "./evidence.ts";
 export { acceptanceLines, featureBody, featureTitle, mergeDescription, NOTES_MARKER, sameMarkdown, urnIn, wmbtBody, wmbtTitle } from "./render.ts";

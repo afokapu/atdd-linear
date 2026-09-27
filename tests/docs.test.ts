@@ -58,3 +58,22 @@ describe("documents and images", () => {
     expect(images.pending).toEqual(["a.png"]);
   });
 });
+
+describe("journeys in words", async () => {
+  const { readPlan } = await import("../src/plan.ts");
+  const { journeyText, releaseSummary } = await import("../src/docs.ts");
+  const plan = await readPlan(new URL("fixtures/repo", import.meta.url).pathname);
+  const j = plan.journeys[0]!;
+  test("a journey says how it starts, what it passes through, and every way it ends", () => {
+    const text = journeyText(j, plan);
+    expect(text).toContain("`journey:checkout` · started by `check_out` · on backend");
+    expect(text).toContain("**Passes through:** Checking out");
+    expect(text).toContain("- *other* · Nominal: the order is confirmed");
+  });
+  test("a release's summary lists its journeys in milestone order, and a milestone with no journey by name", () => {
+    const summary = releaseSummary([
+      { id: "b", name: "2 · Later", description: "no journey here", sortOrder: 2 },
+      { id: "a", name: "1 · Check out", description: "journey:checkout (x). y.", sortOrder: 1 }], plan);
+    expect(summary).toBe("Delivers 2 journeys: Check out → Later.");
+  });
+});

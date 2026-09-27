@@ -23,7 +23,9 @@ describe("the plan, read through atdd-bun", () => {
   });
   test("journeys reach their interlockings, and an unrouted train is reported", async () => {
     const p = await readPlan(ROOT);
-    expect(p.journeys).toEqual([{ id: "journey:checkout", title: "Check out", path: "plan/_journeys/checkout.yaml", interlockings: ["checkout"] }]);
+    expect(p.journeys).toEqual([{ id: "journey:checkout", title: "Check out", path: "plan/_journeys/checkout.yaml", interlockings: ["checkout"],
+      entry: "checkout", exposed: true, actions: ["check_out"], surfaces: ["backend"], continuations: [],
+      terminals: [{ from: "checkout", routeId: "nominal", outcome: "the order is confirmed" }] }]);
     expect(p.unroutedTrains).toEqual(["train:orders:refund"]);
   });
   test("scoping keeps only what an interlocking reaches", async () => {

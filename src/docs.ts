@@ -18,6 +18,7 @@ import { Resvg } from "@resvg/resvg-js";
 import { asciidocToMarkdown, inline } from "./asciidoc.ts";
 import type { Config } from "./config.ts";
 import type { Gql } from "./linear.ts";
+import type { Journey, Plan } from "./plan.ts";
 import type { Lock } from "./release.ts";
 import type { Op } from "./sync.ts";
 import { sameMarkdown } from "./render.ts";
@@ -146,8 +147,53 @@ export function lookupImages(lock: Lock) {
   return { url, pending };
 }
 
+const KINDS = ["nominal", "error", "alternate", "exception"];
+const mode = (title: string) => title.match(/\((PLAY|RUN)\)/)?.[1];
+const human = (s: string) => s.replace(/-/g, " ").replace(/^./, c => c.toUpperCase());
+
+/** A journey in words, from the plan: how it starts, what it passes through, and every way it ends. */
+export function journeyText(j: Journey, plan: Plan): string {
+  const title = (slug: string) => plan.interlockings.find(i => i.slug === slug)?.title || slug;
+  const category = (from: string, routeId: string) => plan.interlockings.find(i => i.slug === from)?.routes.find(r => r.routeId === routeId)?.category || "other";
+  const out: string[] = [];
+  const facets = [`\`${j.id}\``, mode(j.title) ? `**${mode(j.title)}** mode` : "", j.exposed ? `started by ${j.actions.map(a => `\`${a}\``).join(" or ")}` : "internal: no one starts it directly", j.surfaces.length ? `on ${j.surfaces.join(" and ")}` : ""].filter(Boolean);
+  out.push(facets.join(" · "), "");
+  const chain = [title(j.entry), ...j.continuations.map(c => `${title(c.to)} *(on \`${c.artifact}\`)*`)];
+  out.push(`**Passes through:** ${chain.join(" → ")}`, "");
+  out.push("**Ends in:**", "");
+  for (const kind of [...KINDS, "other"]) for (const t of j.terminals.filter(t => category(t.from, t.routeId) === kind)) {
+    out.push(`- *${kind}* · ${human(t.routeId)}: ${t.outcome}`);
+  }
+  return out.join("\n").trim();
+}
+
+/** The two pictures of a journey `atdd-bun docs journeys` draws: its map, and its nominal path end to end. */
+export async function journeyImages(root: string, config: Config, id: string, name: string, image: ImageUrl): Promise<string[]> {
+  const out: string[] = [];
+  for (const [file, label] of [[`journey-${id}.svg`, "journey map"], [`path-${id}-nominal.svg`, "nominal path, end to end"]] as const) {
+    const svg = join(root, config.journeyView, "svg", file);
+    if (existsSync(svg)) out.push(`![${name}: ${label}](${await image(rasterize(readFileSync(svg, "utf8")), file.replace(/\.svg$/, ".png"))})`, "");
+  }
+  return out;
+}
+
+/** The synced block of a milestone's description: its journey in words, then its two pictures. */
+export async function milestoneBody(root: string, config: Config, plan: Plan, journeyId: string, image: ImageUrl): Promise<string> {
+  const j = plan.journeys.find(x => x.id === `journey:${journeyId}`);
+  if (!j) return `\`journey:${journeyId}\` names no journey in the plan.`;
+  return [journeyText(j, plan), "", ...await journeyImages(root, config, journeyId, j.title, image)].join("\n").trim();
+}
+
+/** The one-line summary Linear shows under a release's name: the journeys it delivers, in order. */
+export function releaseSummary(milestones: Milestone[], plan: Plan): string {
+  const titles = [...milestones].sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(m => plan.journeys.find(j => j.id === `journey:${journeyOf(m.description)}`)?.title.replace(/\s*\((PLAY|RUN)\)$/, "") ?? m.name.replace(/^\d+\s*·\s*/, ""));
+  const text = `Delivers ${titles.length} journey${titles.length === 1 ? "" : "s"}: ${titles.join(" → ")}.`;
+  return text.length <= 255 ? text : `${text.slice(0, 252)}…`;
+}
+
 /** The synced block of a release's description: the product in one paragraph, then each journey's map. */
-export async function releaseBody(root: string, config: Config, lock: Lock, projectName: string, milestones: Milestone[], image: ImageUrl): Promise<string> {
+export async function releaseBody(root: string, config: Config, plan: Plan, lock: Lock, projectName: string, milestones: Milestone[], image: ImageUrl): Promise<string> {
   const out: string[] = [];
   if (config.summary && existsSync(join(root, config.summary))) {
     out.push(inline(headline(readFileSync(join(root, config.summary), "utf8")), linkFor(config.summary, lock, config.repo)), "");
@@ -160,13 +206,11 @@ export async function releaseBody(root: string, config: Config, lock: Lock, proj
   out.push(`## The journeys in ${projectName}`, "", "Each milestone is a journey, delivered in this order. A feature sits in the earliest journey that needs it.", "");
   for (const m of [...milestones].sort((a, b) => a.sortOrder - b.sortOrder)) {
     out.push(`### ${m.name}`, "");
-    const first = String(m.description ?? "").split(". ").slice(1).join(". ").trim();
-    if (first) out.push(first, "");
-    const id = journeyOf(m.description), svg = id && join(root, config.journeyView, "svg", `journey-${id}.svg`);
-    if (svg && existsSync(svg)) {
-      const url = await image(rasterize(readFileSync(svg, "utf8")), `journey-${id}.png`);
-      out.push(`![${m.name}: journey map](${url})`, "");
-    }
+    const id = journeyOf(m.description), j = id ? plan.journeys.find(x => x.id === `journey:${id}`) : undefined;
+    if (!id || !j) { out.push(`*This milestone names no journey: add \`journey:<id>\` to its description.*`, ""); continue; }
+    const start = j.exposed ? `Starts with ${j.actions.map(a => `\`${a}\``).join(" or ")}` : "Internal";
+    out.push(`${start}; ${j.terminals.length} outcome${j.terminals.length === 1 ? "" : "s"}. The milestone has the full journey.`, "");
+    out.push(...await journeyImages(root, config, id, j.title, image));
   }
   return out.join("\n").trim();
 }

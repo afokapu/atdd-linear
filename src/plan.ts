@@ -31,8 +31,15 @@ export type Wmbt = {
   objectOfControl: string; path: string; acceptances: string[]; details: Acceptance[]; trains: string[];
 };
 export type Feature = { urn: string; slug: string; wagon: string; description: string; path: string; wmbts: Wmbt[]; trains: string[] };
-export type Interlocking = { slug: string; title: string; path: string; routes: { routeId: string; trainId: string }[] };
-export type Journey = { id: string; title: string; path: string; interlockings: string[] };
+export type Route = { routeId: string; trainId: string; category: string };
+export type Interlocking = { slug: string; title: string; path: string; routes: Route[] };
+export type Continuation = { from: string; routeId: string; artifact: string; to: string };
+export type Terminal = { from: string; routeId: string; outcome: string };
+export type Journey = {
+  id: string; title: string; path: string; interlockings: string[];
+  entry: string; exposed: boolean; actions: string[]; surfaces: string[];
+  continuations: Continuation[]; terminals: Terminal[];
+};
 export type Plan = {
   planRoot: string;
   wagons: Wagon[]; features: Feature[];
@@ -80,7 +87,7 @@ export async function readPlan(root: string): Promise<Plan> {
       if (!trainsOf.has(ref)) trainsOf.set(ref, new Set());
       trainsOf.get(ref)!.add(slug);
     }
-    return { slug, title: str(a.data.title), path: a.file, routes: list(a.data.routes).map(r => ({ routeId: str(r.route_id), trainId: str(r.train_id) })) };
+    return { slug, title: str(a.data.title), path: a.file, routes: list(a.data.routes).map(r => ({ routeId: str(r.route_id), trainId: str(r.train_id), category: str(r.category) })) };
   });
 
   const wmbts = new Map<string, Wmbt>();
@@ -112,7 +119,13 @@ export async function readPlan(root: string): Promise<Plan> {
   const journeys: Journey[] = of("journey").map(a => {
     const entry = a.data.entrypoint as any, reached = new Set<string>([str(entry?.interlocking_id)]);
     for (const c of list(a.data.continuations)) reached.add(str(c?.to?.interlocking_id));
-    return { id: a.id, title: str(a.data.title), path: a.file, interlockings: [...reached].filter(Boolean).map(i => slugOf(i, 1)).sort() };
+    return {
+      id: a.id, title: str(a.data.title), path: a.file, interlockings: [...reached].filter(Boolean).map(i => slugOf(i, 1)).sort(),
+      entry: slugOf(str(entry?.interlocking_id), 1), exposed: entry?.exposed === true,
+      actions: list(entry?.actions).map(str), surfaces: list(entry?.surfaces).map(str),
+      continuations: list(a.data.continuations).map(c => ({ from: slugOf(str(c?.from?.interlocking_id), 1), routeId: str(c?.from?.route_id), artifact: str(c?.artifact), to: slugOf(str(c?.to?.interlocking_id), 1) })),
+      terminals: list(a.data.terminals).map(t => ({ from: slugOf(str(t?.from?.interlocking_id), 1), routeId: str(t?.from?.route_id), outcome: str(t?.outcome) })),
+    };
   });
 
   const routed = new Set(interlockings.flatMap(i => i.routes.map(r => r.trainId)));
