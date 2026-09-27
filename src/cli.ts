@@ -3,12 +3,14 @@
  *   atdd-linear sync [--apply] [--scope <interlocking>] [--results <junit.xml>]
  *   atdd-linear release "<project name>" [--apply]
  *   atdd-linear ci init [--replace]
+ *   atdd-linear agent init [--replace]
  *
  * Every command prints what it would change and changes nothing until --apply.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { topologyFor } from "@afokapu/atdd-bun";
+import { agentInit } from "./agent.ts";
 import { readConfig } from "./config.ts";
 import { evidenceFrom, readBindings } from "./evidence.ts";
 import { client } from "./linear.ts";
@@ -41,6 +43,7 @@ const HELP = `atdd-linear: project an ATDD plan into Linear
   atdd-linear sync [--apply] [--scope <interlocking>] [--results <junit.xml>]
   atdd-linear release "<project name>" [--apply]
   atdd-linear ci init [--replace]
+  atdd-linear agent init [--replace]
 
 Configured by atdd-linear.yaml; the API key comes from LINEAR_API_KEY or the macOS Keychain entry linear-api-key.`;
 
@@ -80,6 +83,13 @@ switch (args[0]) {
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, readFileSync(new URL("../templates/atdd-linear.yml", import.meta.url), "utf8"));
     console.log(`wrote ${out}. Add the repository secret LINEAR_API_KEY.`);
+    break;
+  }
+  case "agent": {
+    if (args[1] !== "init") { console.error("usage: atdd-linear agent init [--replace]"); process.exit(2); }
+    const { written, kept } = agentInit(root, args.includes("--replace"));
+    for (const w of written) console.log(`wrote ${w}`);
+    if (kept.length) console.log(`kept ${kept.join(", ")} (use --replace to refresh)`);
     break;
   }
   default:

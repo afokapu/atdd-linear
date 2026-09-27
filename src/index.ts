@@ -1,3 +1,4 @@
+export { agentInit, INSTRUCTION_PATHS, SKILL_PATHS } from "./agent.ts";
 export { readPlan, scopeTo } from "./plan.ts";
 export type { Acceptance, Continuation, Feature, Interlocking, Journey, Plan, Route, Terminal, Wagon, Wmbt } from "./plan.ts";
 export { evidenceFrom, featureProgress, progressOf, readBindings } from "./evidence.ts";

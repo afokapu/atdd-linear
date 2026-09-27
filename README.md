@@ -58,7 +58,14 @@ bunx atdd-linear sync --apply                # make the changes
 bunx atdd-linear sync --results junit.xml    # take WMBT status from a test run
 bunx atdd-linear release "Forge OS v0.1.0"   # a release: its summary, description and milestones
 bunx atdd-linear ci init                     # a workflow that syncs on every merge to main
+bunx atdd-linear agent init                  # teach the repository's agents how Linear is organised
 ```
+
+`agent init` writes a `linear` skill to `.agents/skills/` and `.claude/skills/`, and a short managed
+block in `AGENTS.md` and `CLAUDE.md` pointing to it: what each Linear level means (initiative: who it
+is for; project: what we build; milestone: which journey; cycle: when it shipped), what the
+repository owns and what people own, and which commands are safe to run where. Rerun it with
+`--replace` after upgrading.
 
 The API key comes from `LINEAR_API_KEY`, or on macOS from the Keychain entry `linear-api-key`
 (`security add-generic-password -U -a "$USER" -s linear-api-key -w`). It is never printed.
