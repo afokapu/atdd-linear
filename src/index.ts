@@ -9,4 +9,4 @@ export { all, apiKey, client } from "./linear.ts";
 export type { Gql } from "./linear.ts";
 export { apply, planSync, stateFor, WAGON_GROUP } from "./sync.ts";
 export type { Op } from "./sync.ts";
-export { LOCK_FILE, planRelease, readLock, viewDescription, writeLock } from "./release.ts";
+export { LOCK_FILE, planRelease, readLock, writeLock } from "./release.ts";

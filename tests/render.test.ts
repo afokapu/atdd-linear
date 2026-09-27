@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { colorFor, readConfig } from "../src/config.ts";
-import { viewDescription } from "../src/release.ts";
 import { acceptanceLines, mergeDescription, NOTES_MARKER, sameMarkdown, urnIn } from "../src/render.ts";
 
 describe("descriptions", () => {
@@ -35,9 +34,5 @@ describe("configuration", () => {
   test("an unconfigured train keeps the same colour from run to run", () => {
     expect(colorFor("checkout", { checkout: "#123456" })).toBe("#123456");
     expect(colorFor("ladder", {})).toBe(colorFor("ladder", {}));
-  });
-  test("a view description is plain text within Linear's limit", () => {
-    expect(viewDescription("`journey:x` · **PLAY** mode")).toBe("journey:x · PLAY mode");
-    expect(viewDescription("y".repeat(400)).length).toBe(250);
   });
 });

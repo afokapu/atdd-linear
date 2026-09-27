@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  *   atdd-linear sync [--apply] [--scope <interlocking>] [--results <junit.xml>]
- *   atdd-linear release "<project name>" [--apply] [--no-views]
+ *   atdd-linear release "<project name>" [--apply]
  *   atdd-linear ci init [--replace]
  *
  * Every command prints what it would change and changes nothing until --apply.
@@ -37,7 +37,7 @@ async function finish(ops: Op[]) {
 const HELP = `atdd-linear: project an ATDD plan into Linear
 
   atdd-linear sync [--apply] [--scope <interlocking>] [--results <junit.xml>]
-  atdd-linear release "<project name>" [--apply] [--no-views]
+  atdd-linear release "<project name>" [--apply]
   atdd-linear ci init [--replace]
 
 Configured by atdd-linear.yaml; the API key comes from LINEAR_API_KEY or the macOS Keychain entry linear-api-key.`;
@@ -66,7 +66,7 @@ switch (args[0]) {
   case "release": {
     const name = args[1];
     if (!name || name.startsWith("--")) { console.error('usage: atdd-linear release "<project name>" [--apply]'); process.exit(2); }
-    await finish(await planRelease(client(), root, name, readConfig(root), !args.includes("--no-views")));
+    await finish(await planRelease(client(), root, name, readConfig(root)));
     break;
   }
   case "ci": {
