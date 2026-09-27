@@ -9,7 +9,7 @@ const cycles = [
   { id: "c4", number: 4, name: null, startsAt: "2026-10-19T03:00:00.000Z" },
 ];
 const fake = (calls: unknown[] = []): Gql => async (query: string, vars?: unknown) => {
-  if (query.includes("teams(")) return { teams: { nodes: [{ cycles: { nodes: cycles } }] } } as any;
+  if (query.includes("cycles(")) return { cycles: { nodes: cycles, pageInfo: { hasNextPage: false, endCursor: "" } } } as any;
   calls.push(vars);
   return { cycleUpdate: { success: true } } as any;
 };

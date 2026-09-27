@@ -4,17 +4,17 @@
  * in `cycles:`. A cycle that already has a name keeps it, whoever gave it, and a cycle past the end of
  * the list stays unnamed rather than being given an invented one.
  */
-import type { Gql } from "./linear.ts";
+import { all, type Gql } from "./linear.ts";
 import type { Op } from "./sync.ts";
 
 type Cycle = { id: string; number: number; name: string | null; startsAt: string };
 
 export async function planCycles(gql: Gql, teamKey: string, names: string[]): Promise<Op[]> {
   if (!names.length) return [];
-  const t = await gql(`query($k:String!){ teams(filter:{key:{eq:$k}}){ nodes{ cycles(first:250){ nodes{ id number name startsAt } } } } }`, { k: teamKey });
-  const team = t.teams.nodes[0];
-  if (!team) throw new Error(`no Linear team with key ${teamKey}`);
-  return (team.cycles.nodes as Cycle[])
+  const cycles = await all<Cycle>(gql,
+    `query($k:String!,$after:String){ cycles(first:100, after:$after, filter:{team:{key:{eq:$k}}}){
+       nodes{ id number name startsAt } pageInfo{ hasNextPage endCursor } } }`, d => d.cycles, { k: teamKey });
+  return cycles
     .filter(c => !c.name?.trim() && names[c.number - 1])
     .sort((a, b) => a.number - b.number)
     .map(c => {
